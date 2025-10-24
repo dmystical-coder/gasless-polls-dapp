@@ -4,6 +4,481 @@
  */
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
-const deployedContracts = {} as const;
+const deployedContracts = {
+  31337: {
+    GaslessPoll: {
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      abi: [
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_owner",
+              type: "address",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "pollId",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "yesCount",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "noCount",
+              type: "uint256",
+            },
+          ],
+          name: "BatchVotesProcessed",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "pollId",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "question",
+              type: "string",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+          ],
+          name: "PollCreated",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "pollId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "voter",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "bool",
+              name: "vote",
+              type: "bool",
+            },
+          ],
+          name: "VoteSubmitted",
+          type: "event",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+          ],
+          name: "closePoll",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_question",
+              type: "string",
+            },
+          ],
+          name: "createPoll",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getAllPolls",
+          outputs: [
+            {
+              internalType: "uint256[]",
+              name: "pollIds",
+              type: "uint256[]",
+            },
+            {
+              internalType: "string[]",
+              name: "questions",
+              type: "string[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "yesVotes",
+              type: "uint256[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "noVotes",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bool[]",
+              name: "active",
+              type: "bool[]",
+            },
+            {
+              internalType: "address[]",
+              name: "creators",
+              type: "address[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "createdAts",
+              type: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getDomainSeparator",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+          ],
+          name: "getPoll",
+          outputs: [
+            {
+              internalType: "string",
+              name: "question",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "yesVotes",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "noVotes",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "active",
+              type: "bool",
+            },
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "createdAt",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_user",
+              type: "address",
+            },
+          ],
+          name: "getUserNonce",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "_vote",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "_nonce",
+              type: "uint256",
+            },
+          ],
+          name: "getVoteHash",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "_user",
+              type: "address",
+            },
+          ],
+          name: "hasUserVoted",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "hasVoted",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "nonces",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "owner",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "pollCount",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "polls",
+          outputs: [
+            {
+              internalType: "string",
+              name: "question",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "yesVotes",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "noVotes",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "active",
+              type: "bool",
+            },
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "createdAt",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "_vote",
+              type: "bool",
+            },
+            {
+              internalType: "uint256",
+              name: "_nonce",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "_signature",
+              type: "bytes",
+            },
+          ],
+          name: "recoverSigner",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256[]",
+              name: "_pollIds",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bool[]",
+              name: "_votes",
+              type: "bool[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "_nonces",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bytes[]",
+              name: "_signatures",
+              type: "bytes[]",
+            },
+          ],
+          name: "submitVotes",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ],
+      inheritedFunctions: {},
+      deployedOnBlock: 1,
+    },
+  },
+} as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

@@ -50,6 +50,8 @@
     "verify": "yarn hardhat:verify"
   },
   "devDependencies": {
+    "@swc/core": "^1.13.5",
+    "@swc/helpers": "^0.5.17",
     "husky": "~9.1.6",
     "lint-staged": "~13.2.2"
   },
