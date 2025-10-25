@@ -34,7 +34,8 @@ const deployGaslessPoll: DeployFunction = async function (hre: HardhatRuntimeEnv
 
   // Get the deployed contract to interact with it after deploying.
   const gaslessPoll = await hre.ethers.getContract<Contract>("GaslessPoll", deployer);
-  console.log("📊 GaslessPoll deployed! Owner/Relayer:", await gaslessPoll.owner());
+  console.log("📊 GaslessPoll deployed! Contract address:", await gaslessPoll.getAddress());
+  console.log("📊 Owner/Relayer set to:", deployer);
 };
 
 export default deployGaslessPoll;
