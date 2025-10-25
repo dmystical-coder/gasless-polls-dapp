@@ -1,13 +1,18 @@
-# 🏗 Scaffold-ETH 2
+# 🗳️ Gasless Polls
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+A decentralized polling application where users can vote **without paying gas fees** using EIP-712 signatures and a relayer service for batch transaction submission.
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+⚙️ Built using NextJS, RainbowKit, Hardhat, Wagmi, Viem, Typescript, and Express.
 
-⚙️ Built using NextJS, RainbowKit, Hardhat, Wagmi, Viem, and Typescript.
+## 🌟 Features
+
+- ✅ **Gasless Voting** - Sign votes off-chain, no gas fees for voters
+- ✅ **EIP-712 Signatures** - Cryptographically secure typed data signing
+- ✅ **Batch Processing** - Relayer submits votes in batches for efficiency
+- ✅ **Modern UI** - Beautiful, responsive interface with dark mode
+- ✅ **Real-time Updates** - Live poll results and status
+- ✅ **Nonce-based Security** - Prevents replay attacks
+- ✅ **Creator Controls** - Poll creators can close their polls
 
 - ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
 - 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
@@ -25,47 +30,101 @@ Before you begin, you need to install the following tools:
 - Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
 - [Git](https://git-scm.com/downloads)
 
-## Quickstart
+## 🚀 Quickstart
 
-To get started with Scaffold-ETH 2, follow the steps below:
+### Prerequisites
 
-1. Install dependencies if it was skipped in CLI:
+- Node.js >= v20.18.3
+- Yarn v1 or v2+
+- Git
 
-```
-cd my-dapp-example
+### 1. Install Dependencies
+
+```bash
 yarn install
 ```
 
-2. Run a local network in the first terminal:
+### 2. Start Local Blockchain
 
-```
+In terminal 1:
+
+```bash
 yarn chain
 ```
 
-This command starts a local Ethereum network using Hardhat. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `packages/hardhat/hardhat.config.ts`.
+This starts a local Hardhat network on `http://127.0.0.1:8545`
 
-3. On a second terminal, deploy the test contract:
+### 3. Deploy Smart Contract
 
-```
+In terminal 2:
+
+```bash
 yarn deploy
 ```
 
-This command deploys a test smart contract to the local network. The contract is located in `packages/hardhat/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/hardhat/deploy` to deploy the contract to the network. You can also customize the deploy script.
+This deploys the `GaslessPoll` contract and saves the address to `packages/nextjs/contracts/deployedContracts.ts`
 
-4. On a third terminal, start your NextJS app:
+### 4. Configure Relayer
 
+In terminal 3:
+
+```bash
+cd packages/relayer
+cp env.example .env
 ```
+
+Edit `.env` and add:
+
+- `DEPLOYER_PRIVATE_KEY` - Get from `yarn chain` output (Account #0 private key)
+- `GASLESS_POLL_CONTRACT_ADDRESS` - Copied from deploy output or `deployedContracts.ts`
+
+```bash
+yarn dev
+```
+
+Relayer will run on `http://localhost:3001`
+
+### 5. Start Frontend
+
+In terminal 4:
+
+```bash
 yarn start
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+Visit `http://localhost:3000` to use the dApp!
 
-Run smart contract test with `yarn hardhat:test`
+## 📝 How It Works
 
-- Edit your smart contracts in `packages/hardhat/contracts`
-- Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
-- Edit your deployment scripts in `packages/hardhat/deploy`
+1. **Create Poll** - Anyone can create a poll (requires gas for creation)
+2. **Vote (Gasless)** - Users sign votes with their wallet (no gas!)
+3. **Relayer Batches** - Signed votes are queued every 30 seconds
+4. **On-chain Submission** - Relayer pays gas to submit batch of votes
+5. **Results Update** - Vote counts update in real-time
 
+## 🧪 Testing
+
+```bash
+cd packages/hardhat
+yarn hardhat test
+```
+
+## 🛠️ Project Structure
+
+```
+gasless-polls/
+├── packages/
+│   ├── hardhat/          # Smart contracts
+│   │   ├── contracts/    # GaslessPoll.sol
+│   │   ├── deploy/       # Deployment scripts
+│   │   └── test/         # Contract tests
+│   ├── nextjs/           # Frontend dApp
+│   │   ├── app/          # Next.js pages
+│   │   ├── components/   # React components
+│   │   └── hooks/        # Custom hooks
+│   └── relayer/          # Backend relayer service
+│       └── src/          # Express server
+```
 
 ## Documentation
 

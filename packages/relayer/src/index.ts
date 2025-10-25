@@ -57,10 +57,32 @@ setInterval(async () => {
     const votesToProcess = [...voteQueue];
     voteQueue = [];
 
-    const pollIds = votesToProcess.map(v => v.pollId);
-    const votes = votesToProcess.map(v => v.vote);
-    const nonces = votesToProcess.map(v => v.nonce);
-    const signatures = votesToProcess.map(v => v.signature);
+    // Filter out votes for inactive polls
+    const validVotes: any[] = [];
+    for (const vote of votesToProcess) {
+        try {
+            const pollData = await contract.polls(vote.pollId);
+            if (pollData.active) {
+                validVotes.push(vote);
+            } else {
+                console.log(`Discarding vote for inactive poll ${vote.pollId} from ${vote.voter}`);
+            }
+        } catch (err) {
+            console.error(`Error checking poll ${vote.pollId}:`, err);
+            // If we can't check, keep it for next batch
+            validVotes.push(vote);
+        }
+    }
+
+    if (validVotes.length === 0) {
+        console.log("No valid votes to process");
+        return;
+    }
+
+    const pollIds = validVotes.map(v => v.pollId);
+    const votes = validVotes.map(v => v.vote);
+    const nonces = validVotes.map(v => v.nonce);
+    const signatures = validVotes.map(v => v.signature);
 
     try {
         const tx = await contract.submitVotes(pollIds, votes, nonces, signatures);
@@ -70,7 +92,7 @@ setInterval(async () => {
     } catch (error) {
         console.error("Error submitting votes:", error);
         // Add votes back to the queue if the transaction fails
-        voteQueue.unshift(...votesToProcess);
+        voteQueue.unshift(...validVotes);
     }
 }, 30000);
 
