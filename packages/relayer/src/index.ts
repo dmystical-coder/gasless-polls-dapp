@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { ethers } from "ethers";
-import { GaslessPoll__factory } from "~~/hardhat/typechain-types";
 
 dotenv.config();
 
@@ -19,9 +18,15 @@ if (!PRIVATE_KEY || !CONTRACT_ADDRESS) {
     process.exit(1);
 }
 
+// GaslessPoll Contract ABI (minimal functions needed for relayer)
+const GASLESS_POLL_ABI = [
+    "function submitVotes(uint256[] memory _pollIds, bool[] memory _votes, uint256[] memory _nonces, bytes[] memory _signatures) external",
+    "function polls(uint256) view returns (string question, uint256 yesVotes, uint256 noVotes, bool active, address creator, uint256 createdAt)",
+];
+
 const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL || "http://127.0.0.1:8545");
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-const contract = GaslessPoll__factory.connect(CONTRACT_ADDRESS, wallet as any);
+const contract = new ethers.Contract(CONTRACT_ADDRESS, GASLESS_POLL_ABI, wallet);
 
 // In-memory storage for vote signatures
 let voteQueue: any[] = [];

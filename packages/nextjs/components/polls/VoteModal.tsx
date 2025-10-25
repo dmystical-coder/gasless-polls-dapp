@@ -75,7 +75,7 @@ export const VoteModal = ({ isOpen, onClose, pollId, vote, pollQuestion, onSucce
       setStep("submitting");
 
       // Submit to relayer
-      const response = await fetch("http://localhost:3001/submit-vote", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_RELAYER_URL}/submit-vote`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
