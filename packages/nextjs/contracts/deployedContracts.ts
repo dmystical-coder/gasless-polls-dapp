@@ -481,7 +481,7 @@ const deployedContracts = {
   },
   84532: {
     GaslessPoll: {
-      address: "0x0b96Dc1398D8D09EEc7F8113B81711FDD8B9Cc8C",
+      address: "0xe1Db6B60f244FfAfb964dF26F99302D4DA2F50b4",
       abi: [
         {
           inputs: [
@@ -540,6 +540,18 @@ const deployedContracts = {
               name: "creator",
               type: "address",
             },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "duration",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "expiresAt",
+              type: "uint256",
+            },
           ],
           name: "PollCreated",
           type: "event",
@@ -570,16 +582,42 @@ const deployedContracts = {
           type: "event",
         },
         {
-          inputs: [
+          inputs: [],
+          name: "MAX_POLL_DURATION",
+          outputs: [
             {
               internalType: "uint256",
-              name: "_pollId",
+              name: "",
               type: "uint256",
             },
           ],
-          name: "closePoll",
-          outputs: [],
-          stateMutability: "nonpayable",
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "MAX_QUESTION_LENGTH",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "MIN_POLL_DURATION",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {
@@ -588,6 +626,11 @@ const deployedContracts = {
               internalType: "string",
               name: "_question",
               type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "_duration",
+              type: "uint256",
             },
           ],
           name: "createPoll",
@@ -599,6 +642,19 @@ const deployedContracts = {
             },
           ],
           stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getActivePollCount",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {
@@ -638,6 +694,11 @@ const deployedContracts = {
             {
               internalType: "uint256[]",
               name: "createdAts",
+              type: "uint256[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "durations",
               type: "uint256[]",
             },
           ],
@@ -695,6 +756,68 @@ const deployedContracts = {
             {
               internalType: "uint256",
               name: "createdAt",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "duration",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+          ],
+          name: "getPollExpiryTime",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "expiryTime",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_creator",
+              type: "address",
+            },
+          ],
+          name: "getPollsByCreator",
+          outputs: [
+            {
+              internalType: "uint256[]",
+              name: "",
+              type: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+          ],
+          name: "getTimeUntilExpiry",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "remainingTime",
               type: "uint256",
             },
           ],
@@ -800,6 +923,25 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "uint256",
+              name: "_pollId",
+              type: "uint256",
+            },
+          ],
+          name: "isPollActive",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "address",
               name: "",
               type: "address",
@@ -868,11 +1010,6 @@ const deployedContracts = {
               type: "uint256",
             },
             {
-              internalType: "bool",
-              name: "active",
-              type: "bool",
-            },
-            {
               internalType: "address",
               name: "creator",
               type: "address",
@@ -880,6 +1017,11 @@ const deployedContracts = {
             {
               internalType: "uint256",
               name: "createdAt",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "duration",
               type: "uint256",
             },
           ],
@@ -950,7 +1092,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 32823778,
+      deployedOnBlock: 32955162,
     },
   },
 } as const;

@@ -5,9 +5,8 @@ import { Avatar } from "../Avatar";
 import { VoteModal } from "./VoteModal";
 import { useAccount, useEnsName } from "wagmi";
 import { CheckCircleIcon, ClockIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 import type { Poll } from "~~/types/poll";
-import { notification } from "~~/utils/scaffold-eth";
 
 interface PollCardProps {
   pollId: number;
@@ -19,15 +18,12 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
   const { address: connectedAddress } = useAccount();
   const [showVoteModal, setShowVoteModal] = useState(false);
   const [selectedVote, setSelectedVote] = useState<boolean | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
 
   // Get ENS name for poll creator
   const { data: creatorEnsName } = useEnsName({
     address: poll.creator as `0x${string}`,
     chainId: 1, // ENS is on mainnet
   });
-
-  const { writeContractAsync: writeGaslessPollAsync } = useScaffoldWriteContract("GaslessPoll");
 
   // Check if user has already voted
   const { data: hasVoted } = useScaffoldReadContract({
@@ -55,36 +51,36 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
     return "Just now";
   };
 
+  const formatDuration = (seconds: bigint) => {
+    const totalSeconds = Number(seconds);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${totalSeconds}s`;
+  };
+
+  // Get remaining time until poll expires
+  const getRemainingTime = () => {
+    const now = Math.floor(Date.now() / 1000);
+    const expiryTime = Number(poll.createdAt) + Number(poll.duration);
+    const remaining = expiryTime - now;
+
+    if (remaining <= 0) return null;
+    return BigInt(remaining);
+  };
+
   const handleVoteClick = (vote: boolean) => {
     setSelectedVote(vote);
     setShowVoteModal(true);
   };
 
-  const handleClosePoll = async () => {
-    if (!connectedAddress) {
-      notification.error("Please connect your wallet");
-      return;
-    }
-
-    setIsClosing(true);
-    try {
-      await writeGaslessPollAsync({
-        functionName: "closePoll",
-        args: [BigInt(pollId)],
-      });
-
-      notification.success("Poll closed successfully!");
-      onVoteSubmitted?.(); // Trigger refresh
-    } catch (error: any) {
-      console.error("Error closing poll:", error);
-      notification.error(error.message || "Failed to close poll");
-    } finally {
-      setIsClosing(false);
-    }
-  };
-
   const isCreator = connectedAddress?.toLowerCase() === poll.creator.toLowerCase();
   const displayName = creatorEnsName || `${poll.creator.slice(0, 6)}...${poll.creator.slice(-4)}`;
+  const remainingTime = getRemainingTime();
 
   return (
     <>
@@ -108,6 +104,18 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
                   <ClockIcon className="w-3 h-3" />
                   <span>{formatTimeAgo(poll.createdAt)}</span>
                 </div>
+                {poll.active && remainingTime !== null && (
+                  <>
+                    <span>•</span>
+                    <span className="text-warning">Expires in {formatDuration(remainingTime)}</span>
+                  </>
+                )}
+                {!poll.active && (
+                  <>
+                    <span>•</span>
+                    <span className="text-base-content/50">Duration: {formatDuration(poll.duration)}</span>
+                  </>
+                )}
                 {isCreator && (
                   <>
                     <span>•</span>
@@ -212,22 +220,6 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
               <button onClick={() => handleVoteClick(false)} className="btn btn-error flex-1 gap-2">
                 <XCircleIcon className="w-5 h-5" />
                 Vote No
-              </button>
-            </div>
-          )}
-
-          {/* Close poll button (only for creator on active polls) */}
-          {isCreator && poll.active && (
-            <div className="card-actions justify-center mt-6">
-              <button onClick={handleClosePoll} className="btn btn-outline btn-error btn-sm" disabled={isClosing}>
-                {isClosing ? (
-                  <>
-                    <span className="loading loading-spinner loading-xs" />
-                    Closing...
-                  </>
-                ) : (
-                  "Close Poll"
-                )}
               </button>
             </div>
           )}

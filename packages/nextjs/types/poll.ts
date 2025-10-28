@@ -6,4 +6,5 @@ export type Poll = {
   active: boolean;
   creator: string;
   createdAt: bigint;
+  duration: bigint;
 };
