@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { Avatar } from "../Avatar";
 import { VoteModal } from "./VoteModal";
-import { useAccount } from "wagmi";
+import { useAccount, useEnsName } from "wagmi";
 import { CheckCircleIcon, ClockIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
+import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import type { Poll } from "~~/types/poll";
+import { notification } from "~~/utils/scaffold-eth";
 
 interface PollCardProps {
   pollId: number;
@@ -18,6 +19,15 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
   const { address: connectedAddress } = useAccount();
   const [showVoteModal, setShowVoteModal] = useState(false);
   const [selectedVote, setSelectedVote] = useState<boolean | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Get ENS name for poll creator
+  const { data: creatorEnsName } = useEnsName({
+    address: poll.creator as `0x${string}`,
+    chainId: 1, // ENS is on mainnet
+  });
+
+  const { writeContractAsync: writeGaslessPollAsync } = useScaffoldWriteContract("GaslessPoll");
 
   // Check if user has already voted
   const { data: hasVoted } = useScaffoldReadContract({
@@ -50,7 +60,31 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
     setShowVoteModal(true);
   };
 
+  const handleClosePoll = async () => {
+    if (!connectedAddress) {
+      notification.error("Please connect your wallet");
+      return;
+    }
+
+    setIsClosing(true);
+    try {
+      await writeGaslessPollAsync({
+        functionName: "closePoll",
+        args: [BigInt(pollId)],
+      });
+
+      notification.success("Poll closed successfully!");
+      onVoteSubmitted?.(); // Trigger refresh
+    } catch (error: any) {
+      console.error("Error closing poll:", error);
+      notification.error(error.message || "Failed to close poll");
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
   const isCreator = connectedAddress?.toLowerCase() === poll.creator.toLowerCase();
+  const displayName = creatorEnsName || `${poll.creator.slice(0, 6)}...${poll.creator.slice(-4)}`;
 
   return (
     <>
@@ -67,9 +101,7 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
               <div className="flex flex-wrap items-center gap-2 text-xs text-base-content/60">
                 <div className="flex items-center gap-2">
                   <Avatar address={poll.creator} size={20} />
-                  <span>
-                    {poll.creator.slice(0, 6)}...{poll.creator.slice(-4)}
-                  </span>
+                  <span>{displayName}</span>
                 </div>
                 <span>•</span>
                 <div className="flex items-center gap-1">
@@ -118,6 +150,9 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
                 <div className="flex items-center gap-2 font-semibold">
                   <CheckCircleIcon className="w-5 h-5 text-success" />
                   <span>Yes</span>
+                  {!poll.active && Number(poll.yesVotes) > Number(poll.noVotes) && totalVotes > 0 && (
+                    <span className="badge badge-success badge-sm ml-2">Winner</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base-content/60">{Number(poll.yesVotes)} votes</span>
@@ -140,6 +175,9 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
                 <div className="flex items-center gap-2 font-semibold">
                   <XCircleIcon className="w-5 h-5 text-error" />
                   <span>No</span>
+                  {!poll.active && Number(poll.noVotes) > Number(poll.yesVotes) && totalVotes > 0 && (
+                    <span className="badge badge-error badge-sm ml-2">Winner</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base-content/60">{Number(poll.noVotes)} votes</span>
@@ -155,6 +193,13 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
                 </div>
               </div>
             </div>
+
+            {/* Tie indicator */}
+            {!poll.active && Number(poll.yesVotes) === Number(poll.noVotes) && totalVotes > 0 && (
+              <div className="text-center py-2">
+                <span className="badge badge-neutral">Tie</span>
+              </div>
+            )}
           </div>
 
           {/* Voting buttons */}
@@ -171,8 +216,24 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
             </div>
           )}
 
+          {/* Close poll button (only for creator on active polls) */}
+          {isCreator && poll.active && (
+            <div className="card-actions justify-center mt-6">
+              <button onClick={handleClosePoll} className="btn btn-outline btn-error btn-sm" disabled={isClosing}>
+                {isClosing ? (
+                  <>
+                    <span className="loading loading-spinner loading-xs" />
+                    Closing...
+                  </>
+                ) : (
+                  "Close Poll"
+                )}
+              </button>
+            </div>
+          )}
+
           {/* Status messages */}
-          {!connectedAddress && (
+          {!connectedAddress && poll.active && (
             <div className="alert alert-info mt-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -206,26 +267,9 @@ export const PollCard = ({ pollId, poll, onVoteSubmitted }: PollCardProps) => {
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="text-sm">You&apos;ve already voted on this poll</span>
-            </div>
-          )}
-
-          {!poll.active && (
-            <div className="alert alert-warning mt-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="stroke-current shrink-0 h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-1.964-1.333-2.732 0L3.732 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <span className="text-sm">This poll has been closed</span>
+              <span className="text-sm">
+                {poll.active ? "You've already voted on this poll" : "You voted on this poll"}
+              </span>
             </div>
           )}
         </div>
