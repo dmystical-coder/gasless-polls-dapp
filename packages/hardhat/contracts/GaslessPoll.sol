@@ -20,14 +20,19 @@ contract GaslessPoll {
     address public immutable owner; // The relayer address
     uint256 public pollCount = 0;
 
+    // Constants for poll duration limits
+    uint256 public constant MIN_POLL_DURATION = 1 hours;
+    uint256 public constant MAX_POLL_DURATION = 30 days;
+    uint256 public constant MAX_QUESTION_LENGTH = 500;
+
     // Poll structure
     struct Poll {
         string question;
         uint256 yesVotes;
         uint256 noVotes;
-        bool active;
         address creator;
         uint256 createdAt;
+        uint256 duration; // Duration in seconds
     }
 
     // Storage mappings
@@ -36,7 +41,13 @@ contract GaslessPoll {
     mapping(uint256 => mapping(address => bool)) public hasVoted; // Track if user voted on poll
 
     // Events
-    event PollCreated(uint256 indexed pollId, string question, address indexed creator);
+    event PollCreated(
+        uint256 indexed pollId,
+        string question,
+        address indexed creator,
+        uint256 duration,
+        uint256 expiresAt
+    );
     event VoteSubmitted(uint256 indexed pollId, address indexed voter, bool vote);
     event BatchVotesProcessed(uint256 indexed pollId, uint256 yesCount, uint256 noCount);
 
@@ -52,23 +63,40 @@ contract GaslessPoll {
     }
 
     /**
-     * @dev Creates a new poll
-     * @param _question The poll question
+     * @dev Checks if a poll is still active based on time
+     * @param _pollId The poll ID
+     * @return bool True if poll is still active
      */
-    function createPoll(string memory _question) external returns (uint256) {
+    function isPollActive(uint256 _pollId) public view returns (bool) {
+        require(_pollId < pollCount, "Poll does not exist");
+        Poll memory poll = polls[_pollId];
+        return block.timestamp < poll.createdAt + poll.duration;
+    }
+
+    /**
+     * @dev Creates a new poll with configurable duration
+     * @param _question The poll question
+     * @param _duration Duration in seconds (must be between MIN and MAX)
+     */
+    function createPoll(string memory _question, uint256 _duration) external returns (uint256) {
         require(bytes(_question).length > 0, "Question cannot be empty");
+        require(bytes(_question).length <= MAX_QUESTION_LENGTH, "Question too long");
+        require(_duration >= MIN_POLL_DURATION, "Duration below minimum");
+        require(_duration <= MAX_POLL_DURATION, "Duration above maximum");
 
         uint256 pollId = pollCount++;
+        uint256 expiresAt = block.timestamp + _duration;
+
         polls[pollId] = Poll({
             question: _question,
             yesVotes: 0,
             noVotes: 0,
-            active: true,
             creator: msg.sender,
-            createdAt: block.timestamp
+            createdAt: block.timestamp,
+            duration: _duration
         });
 
-        emit PollCreated(pollId, _question, msg.sender);
+        emit PollCreated(pollId, _question, msg.sender, _duration, expiresAt);
         return pollId;
     }
 
@@ -144,6 +172,7 @@ contract GaslessPoll {
         uint256[] memory _nonces,
         bytes[] memory _signatures
     ) external onlyOwner {
+        require(_pollIds.length > 0, "Cannot submit empty batch");
         require(
             _pollIds.length == _votes.length && _votes.length == _nonces.length && _nonces.length == _signatures.length,
             "Array lengths must match"
@@ -157,7 +186,7 @@ contract GaslessPoll {
 
             // Verify poll exists and is active
             require(pollId < pollCount, "Poll does not exist");
-            require(polls[pollId].active, "Poll is not active");
+            require(isPollActive(pollId), "Poll has expired");
 
             // Recover signer address
             address signer = recoverSigner(pollId, vote, nonce, signature);
@@ -191,18 +220,6 @@ contract GaslessPoll {
     }
 
     /**
-     * @dev Closes a poll (only creator can close)
-     * @param _pollId The poll ID to close
-     */
-    function closePoll(uint256 _pollId) external {
-        require(_pollId < pollCount, "Poll does not exist");
-        require(polls[_pollId].creator == msg.sender, "Only creator can close poll");
-        require(polls[_pollId].active, "Poll already closed");
-
-        polls[_pollId].active = false;
-    }
-
-    /**
      * @dev Gets poll information
      * @param _pollId The poll ID
      */
@@ -217,12 +234,14 @@ contract GaslessPoll {
             uint256 noVotes,
             bool active,
             address creator,
-            uint256 createdAt
+            uint256 createdAt,
+            uint256 duration
         )
     {
         require(_pollId < pollCount, "Poll does not exist");
         Poll memory poll = polls[_pollId];
-        return (poll.question, poll.yesVotes, poll.noVotes, poll.active, poll.creator, poll.createdAt);
+        bool active = isPollActive(_pollId);
+        return (poll.question, poll.yesVotes, poll.noVotes, active, poll.creator, poll.createdAt, poll.duration);
     }
 
     /**
@@ -255,7 +274,8 @@ contract GaslessPoll {
             uint256[] memory noVotes,
             bool[] memory active,
             address[] memory creators,
-            uint256[] memory createdAts
+            uint256[] memory createdAts,
+            uint256[] memory durations
         )
     {
         pollIds = new uint256[](pollCount);
@@ -265,6 +285,7 @@ contract GaslessPoll {
         active = new bool[](pollCount);
         creators = new address[](pollCount);
         createdAts = new uint256[](pollCount);
+        durations = new uint256[](pollCount);
 
         for (uint256 i = 0; i < pollCount; i++) {
             Poll memory poll = polls[i];
@@ -272,9 +293,77 @@ contract GaslessPoll {
             questions[i] = poll.question;
             yesVotes[i] = poll.yesVotes;
             noVotes[i] = poll.noVotes;
-            active[i] = poll.active;
+            active[i] = isPollActive(i);
             creators[i] = poll.creator;
             createdAts[i] = poll.createdAt;
+            durations[i] = poll.duration;
         }
+    }
+
+    /**
+     * @dev Gets the number of active polls
+     */
+    function getActivePollCount() external view returns (uint256) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < pollCount; i++) {
+            if (isPollActive(i)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * @dev Gets the expiry timestamp of a poll
+     * @param _pollId The poll ID
+     * @return expiryTime Unix timestamp when poll expires
+     */
+    function getPollExpiryTime(uint256 _pollId) external view returns (uint256 expiryTime) {
+        require(_pollId < pollCount, "Poll does not exist");
+        Poll memory poll = polls[_pollId];
+        return poll.createdAt + poll.duration;
+    }
+
+    /**
+     * @dev Gets remaining time until poll expires (in seconds)
+     * @param _pollId The poll ID
+     * @return remainingTime Time in seconds (0 if poll has expired)
+     */
+    function getTimeUntilExpiry(uint256 _pollId) external view returns (uint256 remainingTime) {
+        require(_pollId < pollCount, "Poll does not exist");
+        Poll memory poll = polls[_pollId];
+
+        uint256 expiryTime = poll.createdAt + poll.duration;
+        if (block.timestamp >= expiryTime) {
+            return 0;
+        }
+
+        return expiryTime - block.timestamp;
+    }
+
+    /**
+     * @dev Gets all polls created by a specific address
+     * @param _creator The creator address
+     */
+    function getPollsByCreator(address _creator) external view returns (uint256[] memory) {
+        // First, count how many polls the creator has
+        uint256 count = 0;
+        for (uint256 i = 0; i < pollCount; i++) {
+            if (polls[i].creator == _creator) {
+                count++;
+            }
+        }
+
+        // Create array and populate
+        uint256[] memory creatorPolls = new uint256[](count);
+        uint256 index = 0;
+        for (uint256 i = 0; i < pollCount; i++) {
+            if (polls[i].creator == _creator) {
+                creatorPolls[index] = i;
+                index++;
+            }
+        }
+
+        return creatorPolls;
     }
 }

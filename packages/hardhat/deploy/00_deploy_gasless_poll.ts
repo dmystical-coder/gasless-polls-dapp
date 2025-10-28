@@ -34,8 +34,27 @@ const deployGaslessPoll: DeployFunction = async function (hre: HardhatRuntimeEnv
 
   // Get the deployed contract to interact with it after deploying.
   const gaslessPoll = await hre.ethers.getContract<Contract>("GaslessPoll", deployer);
-  console.log("📊 GaslessPoll deployed! Contract address:", await gaslessPoll.getAddress());
-  console.log("📊 Owner/Relayer set to:", deployer);
+  const contractAddress = await gaslessPoll.getAddress();
+
+  console.log("\n✅ GaslessPoll deployed successfully!");
+  console.log("📍 Contract address:", contractAddress);
+  console.log("👤 Owner/Relayer:", deployer);
+
+  // Display contract configuration
+  const minDuration = await gaslessPoll.MIN_POLL_DURATION();
+  const maxDuration = await gaslessPoll.MAX_POLL_DURATION();
+  const maxQuestionLength = await gaslessPoll.MAX_QUESTION_LENGTH();
+
+  console.log("\n⚙️  Contract Configuration:");
+  console.log(`   Min Poll Duration: ${minDuration} seconds (${Number(minDuration) / 3600} hours)`);
+  console.log(`   Max Poll Duration: ${maxDuration} seconds (${Number(maxDuration) / 86400} days)`);
+  console.log(`   Max Question Length: ${maxQuestionLength} characters`);
+
+  console.log("\n📝 Next Steps:");
+  console.log("   1. Update your relayer .env with the new contract address");
+  console.log("   2. Frontend will auto-update via deployedContracts.ts");
+  console.log("   3. Polls now auto-expire based on duration - no manual closure needed!");
+  console.log("\n");
 };
 
 export default deployGaslessPoll;
