@@ -12,7 +12,9 @@ A decentralized polling application where users can vote **without paying gas fe
 - ✅ **Modern UI** - Beautiful, responsive interface with dark mode
 - ✅ **Real-time Updates** - Live poll results and status
 - ✅ **Nonce-based Security** - Prevents replay attacks
-- ✅ **Creator Controls** - Poll creators can close their polls
+- ✅ **Configurable Duration** - Set poll duration (1 hour - 30 days) at creation
+- ✅ **Automatic Expiry** - Polls close automatically based on duration
+- ✅ **My Polls View** - Filter to see only your created polls
 
 - ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
 - 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
@@ -96,11 +98,12 @@ Visit `http://localhost:3000` to use the dApp!
 
 ## 📝 How It Works
 
-1. **Create Poll** - Anyone can create a poll (requires gas for creation)
-2. **Vote (Gasless)** - Users sign votes with their wallet (no gas!)
-3. **Relayer Batches** - Signed votes are queued every 30 seconds
-4. **On-chain Submission** - Relayer pays gas to submit batch of votes
-5. **Results Update** - Vote counts update in real-time
+1. **Create Poll** - Set question and duration (1-30 days), requires gas
+2. **Vote (Gasless)** - Sign votes with your wallet (no gas!)
+3. **Relayer Batches** - Signed votes queued every 30 seconds
+4. **On-chain Submission** - Relayer pays gas to submit vote batch
+5. **Auto-Expire** - Polls close automatically when duration ends
+6. **Results Update** - Vote counts and winners shown in real-time
 
 ## 🧪 Testing
 
